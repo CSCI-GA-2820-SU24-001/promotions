@@ -1,0 +1,70 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Lint and Test
+
+on:
+  push:
+    branches: [$default_branch]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  Lint:
+    runs-on: ubuntu-latest
+    container: python:3.11-slim
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: |
+        pip install poetry
+        poetry config virtualenvs.create false
+        poetry install
+    - name: Run Lint
+      run: |
+        flake8 service tests --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
+        pylint service tests --max-line-length=127
+
+  Test:
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: pgs3cr3t
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    runs-on: ubuntu-latest
+    container: python:3.11-slim
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: |
+        pip install poetry
+        poetry config virtualenvs.create false
+        poetry install
+    - name: Test
+      env:
+        DATABASE_URI: "postgresql+psycopg://postgres:pgs3cr3t@postgres:5432/testdb"
+      run: |
+        export FLASK_APP=service:app
+        pytest --pspec --cov=service --cov-fail-under=95
+    
+      
