@@ -66,7 +66,6 @@ def create_promotion():
         abort(status.HTTP_500_INTERNAL_SERVER_ERROR, "Internal Server Error")
 
 
-
 @app.route("/promotions/<int:promotion_id>", methods=["PUT"])
 def update(promotion_id):
     """Updates a Promotion with promotion_id with the fields included in the body of the request"""
@@ -85,6 +84,19 @@ def update(promotion_id):
     except Exception as error:  # pylint: disable=broad-except
         return abort_with_error(status.HTTP_500_INTERNAL_SERVER_ERROR, f"An error occurred : {error}")
 
+
+@app.route("/promotions/<int:promotion_id>", methods=["GET"])
+def read(promotion_id):
+    """
+    Read details of specific promotion id
+    """
+    app.logger.info("Request to Retrieve a promotion with promotion id [%s]", promotion_id)
+    promotion = Promotion.find(promotion_id)
+    if not promotion:
+        abort(status.HTTP_404_NOT_FOUND, f"Promotion with id '{promotion_id}' was not found.")
+    app.logger.info("Returning promotion: %s", promotion.promotion_name)
+    return jsonify(promotion.serialize()), status.HTTP_200_OK
+
 ######################################################################
 #  U T I L  F U N C T I O N S
 ######################################################################
@@ -99,7 +111,8 @@ def abort_with_error(error_code, error_msg):
     """
     app.logger.error(error_msg)
     abort(error_code, error_msg)
-    
+
+
 def check_content_type(content_type):
     """Checks that the media type is correct"""
     if request.headers["Content-Type"] != content_type:
