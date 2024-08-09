@@ -62,3 +62,12 @@ cluster-rm: ## Remove a K3D Kubernetes cluster
 depoy: ## Deploy the service on local Kubernetes
 	$(info Deploying service locally...)
 	kubectl apply -f k8s/
+
+build-image: ## Build the Docker image
+	$(info Building Docker image...)
+	docker build -t customers:latest .
+
+push-image: ## Push the Docker image to the registry
+	$(info Pushing Docker image to registry...)
+	docker tag customers:latest cluster-registry:5000/customers:latest
+	docker push cluster-registry:5000/customers:latest

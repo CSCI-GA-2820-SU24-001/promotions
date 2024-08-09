@@ -29,7 +29,7 @@ class TestYourResourceService(TestCase):
     @classmethod
     def setUpClass(cls):
         """Run once before all tests"""
-        app.config["TESTING"] = True
+        app.config["TESTING"] = False
         app.config["DEBUG"] = False
         # Set up the test database
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
@@ -59,7 +59,9 @@ class TestYourResourceService(TestCase):
         promotion = PromotionFactory()
         print(promotion.serialize())
         response = self.client.post(
-            "/api/promotions", json=promotion.serialize(), content_type="application/json"
+            "/api/promotions",
+            json=promotion.serialize(),
+            content_type="application/json",
         )
         print(response.get_data())
         print(response)
@@ -200,6 +202,7 @@ class TestYourResourceService(TestCase):
             "promotion_scope": "ENTIRE_STORE",
         }
         resp = self.client.put(f"/api/promotions/{184182325}", json=new_promotion_data)
+        print(resp.data)
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
         db.session.expire_all()
         updated_promotion = Promotion.find(existing_promotion.promotion_id)
@@ -287,8 +290,12 @@ class TestYourResourceService(TestCase):
         data_created_when_str = datetime_to_str(data_created_when)
         data_modified_when_str = datetime_to_str(data_modified_when)
 
-        self.assertEqual(data_created_when_str, datetime_to_str(existing_promotion.created_when))
-        self.assertEqual(data_modified_when_str, datetime_to_str(existing_promotion.modified_when))
+        self.assertEqual(
+            data_created_when_str, datetime_to_str(existing_promotion.created_when)
+        )
+        self.assertEqual(
+            data_modified_when_str, datetime_to_str(existing_promotion.modified_when)
+        )
 
     def test_get_promotion_not_found(self):
         """It should not Get a Promotion thats not found"""
@@ -330,7 +337,9 @@ class TestYourResourceService(TestCase):
                 raise ConnectionError
 
             existing_promotion.delete = mock_delete_with_exception
-            resp = self.client.delete(f"/api/promotions/{existing_promotion.promotion_id}")
+            resp = self.client.delete(
+                f"/api/promotions/{existing_promotion.promotion_id}"
+            )
             self.assertEqual(resp.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
             db.session.expire_all()
             saved_promotion = Promotion.find(existing_promotion.promotion_id)
@@ -431,7 +440,9 @@ class TestYourResourceService(TestCase):
         """It should switch the activate column of promotions with valid_promotion_id to True"""
         existing_promotion = PromotionFactory()
         existing_promotion.create()
-        resp = self.client.put(f"/api/promotions/activate/{existing_promotion.promotion_id}")
+        resp = self.client.put(
+            f"/api/promotions/activate/{existing_promotion.promotion_id}"
+        )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         db.session.expire_all()
         activated_promotion = Promotion.find(existing_promotion.promotion_id)
@@ -451,7 +462,9 @@ class TestYourResourceService(TestCase):
         """It should switch the deactivate column of promotions with valid_promotion_id to False"""
         existing_promotion = PromotionFactory()
         existing_promotion.create()
-        resp = self.client.put(f"/api/promotions/deactivate/{existing_promotion.promotion_id}")
+        resp = self.client.put(
+            f"/api/promotions/deactivate/{existing_promotion.promotion_id}"
+        )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         db.session.expire_all()
         deactivated_promotion = Promotion.find(existing_promotion.promotion_id)

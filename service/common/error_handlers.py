@@ -16,8 +16,8 @@
 """
 Module: error_handlers
 """
-from flask import jsonify
 from flask import current_app as app  # Import Flask application
+from service import api
 from service.models import DataValidationError
 from . import status
 
@@ -25,41 +25,21 @@ from . import status
 ######################################################################
 # Error Handlers
 ######################################################################
-@app.errorhandler(DataValidationError)
+@api.errorhandler(DataValidationError)
 def request_validation_error(error):
     """Handles Value Errors from bad data"""
     return bad_request(error)
 
 
-@app.errorhandler(Exception)
-def request_generic_error(error):
-    """Handles Value Errors from bad data"""
-    return internal_server_error(error)
-
-
-@app.errorhandler(status.HTTP_400_BAD_REQUEST)
 def bad_request(error):
     """Handles bad requests with 400_BAD_REQUEST"""
     message = str(error)
     app.logger.warning(message)
     return (
-        jsonify(
-            status=status.HTTP_400_BAD_REQUEST, error="Bad Request", message=message
-        ),
+        {
+            "status_code": status.HTTP_400_BAD_REQUEST,
+            "error": "Bad Request",
+            "message": message,
+        },
         status.HTTP_400_BAD_REQUEST,
-    )
-
-
-@app.errorhandler(status.HTTP_500_INTERNAL_SERVER_ERROR)
-def internal_server_error(error):
-    """Handles unexpected server error with 500_SERVER_ERROR"""
-    message = str(error)
-    app.logger.error(message)
-    return (
-        jsonify(
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            error="Internal Server Error",
-            message=message,
-        ),
-        status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
